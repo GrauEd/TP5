@@ -7,7 +7,7 @@ import arcade
 #import arcade.gui
 
 from game_state import GameState
-
+from attack_animation import AttackType, AttackAnimation
 class AttackType(Enum):
    """
    Simple énumération pour représenter les différents types d'attaques.
@@ -66,15 +66,21 @@ class MyGame(arcade.Window):
        self.game_state = None
 
    def setup(self):
-       """
-       Configurer les variables de votre jeu ici. Il faut appeler la méthode une nouvelle
-       fois si vous recommencer une nouvelle partie.
-       """
-       # C'est ici que vous allez créer vos listes de sprites et vos sprites.
-       # Prenez note que vous devriez attribuer une valeur à tous les attributs créés dans __init__
+           self.player = arcade.Sprite('asset/faceBeard.png', 0.5, center_x=self.PLAYER_IMAGE_X, center_y=self.PLAYER_IMAGE_Y)
+           self.computer = arcade.Sprite('asset/compy.png', 2.5, center_x=self.COMPUTER_IMAGE_X, center_y=self.COMPUTER_IMAGE_Y)
+           self.players = None
+           self.rock = arcade.Sprite('asset/srock.png', 0.5, center_x=SCREEN_WIDTH / 4, center_y=SCREEN_HEIGHT / 5)
+           self.paper = arcade.Sprite('asset/spaper.png', 0.5, center_x=SCREEN_WIDTH / 3, center_y=SCREEN_HEIGHT / 5)
+           self.scissors = arcade.Sprite('asset/scissors.png', 0.5, center_x=SCREEN_WIDTH / 6, center_y=SCREEN_HEIGHT / 5)
 
-       pass
-
+           self.player_score = 0
+           self.computer_score = 0
+           self.player_attack_type = {1: AttackType.ROCK, 2: AttackType.PAPER, 3: AttackType.SCISSORS}
+           self.computer_attack_type = None
+           self.player_attack_chosen = False
+           self.player_won_round = 0
+           self.draw_round = None
+           self.game_state = GameState.ROUND_ACTIVE
 
 
    def validate_victory(self):
