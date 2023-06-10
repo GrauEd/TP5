@@ -6,38 +6,16 @@ from game_state import GameState
 from attack_animation import AttackType
 from attack_animation import AttackAnimation
 import random
-class AttackType(Enum):
-   """
-   Simple énumération pour représenter les différents types d'attaques.
-   """
-   ROCK = 0,
-   PAPER = 1,
-   SCISSORS = 2
 
-class AttackAnimation(arcade.Sprite):
-   ATTACK_SCALE = 0.50
-   ANIMATION_SPEED = 5.0
-
-
-
-#from attack_animation import AttackType, AttackAnimation
-#from game_state import GameState
 
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 600
-SCREEN_TITLE = "Roche, papier, ciseaux"
+SCREEN_TITLE = "Rock, Paper,, Scissors"
 DEFAULT_LINE_HEIGHT = 45  # The default line height for text.
 
 
 class MyGame(arcade.Window):
-
-   PLAYER_IMAGE_X = (SCREEN_WIDTH / 2) - (SCREEN_WIDTH / 4)
-   PLAYER_IMAGE_Y = SCREEN_HEIGHT / 2.5
-   COMPUTER_IMAGE_X = (SCREEN_WIDTH / 2) * 1.5
-   COMPUTER_IMAGE_Y = SCREEN_HEIGHT / 2.5
-   ATTACK_FRAME_WIDTH = 154 / 2
-   ATTACK_FRAME_HEIGHT = 154 / 2
-
+    #define the parameters before the game starts
    def __init__(self, width, height, title):
        super().__init__(width, height, title)
 
@@ -49,16 +27,17 @@ class MyGame(arcade.Window):
        self.rock = None
        self.paper = None
        self.scissors = None
-       self.player_score = 0
-       self.computer_score = 0
-       self.player_attack_type = {}
        self.computer_attack_type = None
        self.player_attack_chosen = False
        self.player_won_round = None
        self.draw_round = None
        self.game_state = None
+       self.player_score = 0
+       self.computer_score = 0
+       self.player_attack_type = {}
 
    def setup(self):
+       #define the parameters before the first roud after the game starts
        self.player_score = 0
        self.computer_score = 0
        self.player_attack_type = {1: AttackType.ROCK, 2: AttackType.PAPER, 3: AttackType.SCISSORS}
@@ -74,200 +53,194 @@ class MyGame(arcade.Window):
        self.paper = arcade.Sprite('asset/spaper.png', 0.5, center_x=SCREEN_WIDTH / 3, center_y=SCREEN_HEIGHT / 5)
        self.scissors = arcade.Sprite('asset/scissors.png', 0.5, center_x=SCREEN_WIDTH / 6, center_y=SCREEN_HEIGHT / 5)
 
-
-
-
-   def validate_victory(self):
-       if self.player_win:
-           arcade.draw_text("Partie gagnée!", 280, 530, arcade.color.RED, 30)
-       elif self.player_lose:
-           arcade.draw_text("Partie perdue!", 280, 530, arcade.color.RED, 30)
-       elif self.nul_game:
-           arcade.draw_text("Partie nulle!", 300, 530, arcade.color.RED, 30)
-
    def draw_possible_attack(self):
-       """
-       Méthode utilisée pour dessiner toutes les possibilités d'attaque du joueur
-       (si aucune attaque n'a été sélectionnée, il faut dessiner les trois possibilités)
-       (si une attaque a été sélectionnée, il faut dessiner cette attaque)
-       """
-       pass
+       #Draw the attacks that the player can chose from (Ui element)
+       if self.game_state == GameState.ROUND_ACTIVE:
+           self.type_choice.draw()
+       elif self.game_state == GameState.ROUND_DONE or self.game_state == GameState.GAME_OVER:
+           if self.player_attack_type == AttackType.ROCK:
+               self.rock_player.draw()
+           elif self.player_attack_type == AttackType.PAPER:
+               self.paper_player.draw()
+           elif self.player_attack_type == AttackType.SCISSORS:
+               self.scissors_player.draw()
 
    def draw_computer_attack(self):
-       """
-       Méthode utilisée pour dessiner les possibilités d'attaque de l'ordinateur
-       """
-       pass
+       #Draw the attacks that the computer can chose (Ui element)
+       if self.computer_attack_type == AttackType.ROCK:
+           self.rock_computer.draw()
+       elif self.computer_attack_type == AttackType.PAPER:
+           self.paper_computer.draw()
+       elif self.computer_attack_type == AttackType.SCISSORS:
+           self.scissors_computer.draw()
 
 
    def draw_scores(self):
-       """
-       Montrer les scores du joueur et de l'ordinateur
-       """
-       pass
+       #Draw the score of the computer so the player can see it
+       arcade.draw_text("Computer score: {self.computer_score}", SCREEN_WIDTH / 4.1, SCREEN_HEIGHT / 12,
+       arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+       arcade.draw_text("Your score: {self.player_score}", SCREEN_WIDTH / -4, SCREEN_HEIGHT / 12,
+       arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+
 
    def draw_instructions(self):
-       """
-       Dépendemment de l'état de jeu, afficher les instructions d'utilisation au joueur (appuyer sur espace, ou sur une image)
-       """
-       pass
+       #Draw the instructions for the player and if they won or lost the current round
+       if self.game_state == GameState.NOT_STARTED:
+           arcade.draw_text("Press space bar to reset", 0, SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                            arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+
+       elif self.game_state == GameState.ROUND_ACTIVE:
+           arcade.draw_text("Click to attack", 0,
+                            SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                            arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+       elif self.game_state == GameState.ROUND_DONE and self.player_won_round == True:
+           arcade.draw_text("You won. Congratulations. Press space bar to reset.", 0,
+                            SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                            arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+       elif self.game_state == GameState.ROUND_DONE and self.player_won_round == False:
+           arcade.draw_text("You lost. Better luck next time. Press space bar to reset.", 0,
+                            SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                            arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+       elif self.game_state == GameState.ROUND_DONE and self.player_won_round == None:
+           arcade.draw_text("You tied. So close! Press space bar to reset.", 0,
+                            SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                            arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+       elif self.game_state == GameState.GAME_OVER:
+           if self.player_score > self.computer_score:
+               arcade.draw_text("You won the game. Congratulations. Press space bar to reset.", 0,
+                                SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                                arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+           elif self.player_score < self.computer_score:
+               arcade.draw_text("You lost the game. Better luck next time. Press space bar to reset.", 0,
+                                SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 3,
+                                arcade.color.ALMOND, 20, width=SCREEN_WIDTH, align="center")
+
 
    def on_draw(self):
-       """
-       C'est la méthode que Arcade invoque à chaque "frame" pour afficher les éléments
-       de votre jeu à l'écran.
-       """
-
-       # Cette commande permet d'effacer l'écran avant de dessiner. Elle va dessiner l'arrière
-       # plan selon la couleur spécifié avec la méthode "set_background_color".
+       #Draw all the ui elements so the end user can see them
        arcade.start_render()
+       arcade.draw_text(SCREEN_TITLE, 0, SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 2, arcade.color.ALMOND, 50,
+                        width=SCREEN_WIDTH, align="center")
 
-       # Display title
-       arcade.draw_text(SCREEN_TITLE,
-                        0,
-                        SCREEN_HEIGHT - DEFAULT_LINE_HEIGHT * 2,
-                        arcade.color.BLACK_BEAN,
-                        60,
-                        width=SCREEN_WIDTH,
-                        align="center")
+       arcade.draw_rectangle_outline(SCREEN_WIDTH / 4, SCREEN_HEIGHT / 5, self.ATTACK_FRAME_WIDTH,
+                                     self.ATTACK_FRAME_HEIGHT, arcade.color.AERO_BLUE, 5)
+       arcade.draw_rectangle_outline(SCREEN_WIDTH / 3, SCREEN_HEIGHT / 5, self.ATTACK_FRAME_WIDTH,
+                                     self.ATTACK_FRAME_HEIGHT, arcade.color.AERO_BLUE, 5)
+       arcade.draw_rectangle_outline(SCREEN_WIDTH / 6, SCREEN_HEIGHT / 5, self.ATTACK_FRAME_WIDTH,
+                                     self.ATTACK_FRAME_HEIGHT, arcade.color.AERO_BLUE, 5)
+       arcade.draw_rectangle_outline(SCREEN_WIDTH / 1.35, SCREEN_HEIGHT / 5, self.ATTACK_FRAME_WIDTH,
+                                     self.ATTACK_FRAME_HEIGHT, arcade.color.AERO_BLUE, 5)
 
-       self.draw_instructions()
-       self.players.draw()
-       self.draw_possible_attack()
        self.draw_scores()
-
-       #afficher l'attaque de l'ordinateur selon l'état de jeu
-       #afficher le résultat de la partie si l'ordinateur a joué (ROUND_DONE)
+       self.draw_computer_attack()
+       self.draw_instructions()
+       self.player.draw()
+       self.computer.draw()
+       self.draw_possible_attack()
 
 
    def on_update(self, delta_time):
+       self.rock.on_update()
+       self.scissors.on_update()
+       self.paper.on_update()
 
-        self.rock.on_update()
-        self.scissors.on_update()
-        self.paper.on_update()
-        if self.game_state == GameState.ROUND_ACTIVE:
-            if self.atack_choix:
-                bot_attaque = random.randint(0, 2)
-                if bot_attaque == 0:
-                    self.robot_attack = AttaqueType.ROCK
-                elif bot_attaque == 1:
-                    self.robot_attack = AttaqueType.PAPER
-                else:
-                    self.robot_attack = AttaqueType.SCISSOR
+       if self.game_state == GameState.ROUND_ACTIVE:
+           if self.game_state == GameState.ROUND_ACTIVE:
+               if self.player_attack_chosen:
+                   npc_attack = random.randint(0, 2)
+                   if npc_attack == 0:
+                       self.computer_attack_type = AttaqueType.ROCK
+                   elif npc_attack == 1:
+                       self.computer_attack_type = AttaqueType.PAPER
+                   else:
+                       self.computer_attack_type = AttaqueType.SCISSOR
 
-                if self.robot_attack == AttaqueType.ROCK:
-                    if self.joueur_atack == AttaqueType.ROCK:
-                        self.nul_game = True
-                    elif self.joueur_atack == AttaqueType.PAPER:
-                        self.player_win = True
-                    else:
-                        self.player_lose = True
-                elif self.robot_attack == AttaqueType.PAPER:
-                    if self.joueur_atack == AttaqueType.ROCK:
-                        self.player_lose = True
-                    elif self.joueur_atack == AttaqueType.PAPER:
-                        self.nul_game = True
-                    else:
-                        self.player_win = True
-                elif self.robot_attack == AttaqueType.SCISSOR:
-                    if self.joueur_atack == AttaqueType.ROCK:
-                        self.player_win = True
-                    elif self.joueur_atack == AttaqueType.PAPER:
-                        self.player_lose = True
-                    else:
-                        self.nul_game = True
+           if self.robot_attack == AttackType.ROCK:
+                   if self.player_attack_type == AttackType.ROCK:
+                       self.nul_game = True
+                   elif self.player_attack_type == AttackType.PAPER:
+                       self.player_win = True
+                   else:
+                       self.player_lose = True
+               elif self.player_attack_type == AttackType.PAPER:
+                   if self.player_attack_type == AttackType.ROCK:
+                       self.player_lose = True
+                   elif self.player_attack_type == AttackType.PAPER:
+                       self.nul_game = True
+                   else:
+                       self.player_win = True
+               elif self.computer_attack_type == AttackType.SCISSOR:
+                   if self.player_attack_type == AttackType.ROCK:
+                       self.player_win = True
+                   elif self.player_attack_type == AttackType.PAPER:
+                       self.player_lose = True
+                   else:
+                       self.nul_game = True
 
-                if self.player_win:
-                    self.points_joueurs += 1
-                    self.game_state = GameState.ROUND_DONE
-                elif self.player_lose:
-                    self.point_botssss += 1
-                    self.game_state = GameState.ROUND_DONE
-                elif self.nul_game:
-                    self.point_botssss += 0
-                    self.points_joueurs += 0
-                    self.game_state = GameState.ROUND_DONE
+               if self.player_win:
+                   self.player_score += 1
+                   self.game_state = GameState.ROUND_DONE
+               elif self.player_lose:
+                   self.computer_score += 1
+                   self.game_state = GameState.ROUND_DONE
+               elif self.nul_game:
+                   self.computer_score += 0
+                   self.player_score += 0
+                   self.game_state = GameState.ROUND_DONE
 
-        elif self.game_state == GameState.ROUND_DONE:
-            if self.points_joueurs == 3:
-                self.round_won = True
-                self.game_state = GameState.ROUND_OVER
-            elif self.point_botssss == 3:
-                self.round_won = False
-                self.game_state = GameState.ROUND_OVER
-
-    def on_key_press(self, key, key_modifiers):
-        """
-        Cette méthode est invoquée à chaque fois que l'usager tape une touche
-        sur le clavier.
-        Paramètres:
-            - key: la touche enfoncée
-            - key_modifiers: est-ce que l'usager appuie sur "shift" ou "ctrl" ?
-
-        Pour connaître la liste des touches possibles:
-        http://arcade.academy/arcade.key.html
-        """
-        if key == arcade.key.SPACE:
-            if self.game_state == GameState.NOT_STARTED:
-                self.game_state = GameState.ROUND_ACTIVE
-            elif self.game_state == GameState.ROUND_DONE:
-                self.game_state = GameState.ROUND_ACTIVE
-                self.player_win = self.player_lose = self.nul_game = False
-                self.atack_choix = False
-                self.joueur_atack = AttaqueType.NOT_STARTED
-
-        elif key == arcade.key.R:
-            if self.game_state == GameState.ROUND_OVER:
-                self.game_state = GameState.NOT_STARTED
-                self.player_win = self.player_lose = self.nul_game = False
-                self.points_joueurs = self.point_botssss = 0
-                self.atack_choix = False
-                self.joueur_atack = AttaqueType.NOT_STARTED
-
-
+       elif self.game_state == GameState.ROUND_DONE:
+           if self.player_score == 3:
+               self.round_won = True
+               self.game_state = GameState.ROUND_OVER
+           elif self.computer_score == 3:
+               self.round_won = False
+               self.game_state = GameState.ROUND_OVER
 
    def on_key_press(self, key, key_modifiers):
 
        if key == arcade.key.SPACE:
+
            if self.game_state == GameState.NOT_STARTED:
                self.game_state = GameState.ROUND_ACTIVE
            elif self.game_state == GameState.ROUND_DONE:
                self.game_state = GameState.ROUND_ACTIVE
                self.player_win = self.player_lose = self.nul_game = False
-               self.atack_choix = False
-               self.joueur_atack = AttackType.NOT_STARTED
-       pass
+               self.player_attack_chosen = False
+               self.player_attack_type = AttackType.NOT_STARTED
+       elif key == arcade.key.R:
+           if self.game_state == GameState.ROUND_OVER:
+               self.game_state = GameState.NOT_STARTED
+               self.player_win = self.player_lose = self.nul_game = False
+               self.player_score = self.computer_score = 0
+               self.player_attack_chosen = False
+               self.player_attack_type = AttaqueType.NOT_STARTED
+
+
 
    def reset_round(self):
-       """
-       Réinitialiser les variables qui ont été modifiées
-       """
        self.computer_attack_type = -1
        self.player_attack_chosen = False
        self.player_attack_type = {AttackType.ROCK: False, AttackType.PAPER: False, AttackType.SCISSORS: False}
-       self.player_won_round = False
+       self.player_win = False
        self.draw_round = False
-
-       pass
 
    def on_mouse_press(self, x, y, button, key_modifiers):
 
        if self.game_state == GameState.ROUND_ACTIVE:
            if self.scissors.collides_with_point((x, y)):
-               self.joueur_atack = AttaqueType.SCISSOR
-               self.atack_choix = True
+               self.player_attack_type = AttackType.SCISSOR
+               self.player_attack_chosen = True
 
            if self.rock.collides_with_point((x, y)):
-               self.joueur_atack = AttaqueType.ROCK
-               self.atack_choix = True
+               self.player_attack_type = AttackType.ROCK
+               self.player_attack_chosen = True
 
            if self.paper.collides_with_point((x, y)):
-               self.joueur_atack = AttaqueType.PAPER
-               self.atack_choix = True
+               self.player_attack_type = AttackType.PAPER
+               self.player_attack_chosen = True
 
        # Test de collision pour le type d'attaque (self.player_attack_type).
        # Rappel que si le joueur choisi une attaque, self.player_attack_chosen = True
-       pass
 
 
 def main():
